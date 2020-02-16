@@ -1,0 +1,25 @@
+#set("content") {
+<h1>#(websiteTitle)</h1>
+#if(book) {
+<div class = "form-group">
+    <h3>Edit Completed</h3>
+</div>
+} else {
+<form action = "./#(bookId)" method = "post">
+    <div class = "form-group">
+            <input class = "form-control" name = "id" id = "id" type="hidden" value = "0">
+            <input class = "form-control" name = "title" id = "title" type="hidden" value = "test">
+            <input class = "form-control" name = "category" id = "category" type="hidden" value = "test">
+            <input class = "form-control" name = "numberOfItems" id = "numberOfItems" type="number" placeholder="Number of items">
+                </div>
+    <div class = "form-group">
+        <input class = "form-control" name = "price" id = "price" type="number" placeholder="Price">
+            </div>
+    <div class = "form-group">
+        <button class= "btn btn-primary" type="submit">Edit Book</button>
+    </div>
+</form>
+}
+}
+#embed("base")
+

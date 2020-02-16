@@ -1,0 +1,22 @@
+#set("content") {
+<h1>#(websiteTitle)</h1>
+#if(initialOpen) {
+<form action = "/buyBook" method = "post">
+    <div class = "form-group">
+        <input class = "form-control" name = "bookId" id = "bookId" type="text" placeholder="Search by book category">
+            </div>
+    <div class = "form-group">
+        <button class= "btn btn-primary" type="submit">Buy Book</button>
+    </div>
+</form>
+} else {
+#if(buyResponse.success) {
+<div class = "form-group">
+    <h3>Purchase Completed</h3>
+</div>
+} else {
+<h2>This book is not available at the moment</h2>
+}
+}
+}
+#embed("base")

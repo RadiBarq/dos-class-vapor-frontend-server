@@ -1,13 +1,12 @@
 
 #set("content") {
 <h1>#(websiteTitle)</h1>
-#if(books) {
-<form action = "/search_books.php" method = "get">
+<form action = "/search" method = "get">
     <div class = "form-group">
-        <input class = "form-control" id = "category" type="text" placeholder="Search by book category">
-            </div>
+        <input class = "form-control" id = "category" name = "category" type="text" placeholder="Search by book category">
+    </div>
     <div class = "form-group">
-        <button class= "btn btn-primary" type="button">Search</button>
+        <button class= "btn btn-primary" type="submit">Search</button>
     </div>
 </form>
 <table class="table table-bordered table-hover">
@@ -23,14 +22,11 @@
         <tr>
             <td>#(book.id)</td>
             <td>#(book.title)</td>
-            <td>#(book.category.title)</td>
+            <td>#(book.category)</td>
         </tr>
         }
     </tbody>
 </table>
-} else {
-<h2>There is no books available yet!</h2>
-}
 }
 
 #embed("base")

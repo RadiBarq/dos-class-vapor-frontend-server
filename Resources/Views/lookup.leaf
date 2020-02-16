@@ -1,0 +1,46 @@
+
+#set("content") {
+<h1>#(websiteTitle)</h1>
+<form action = "/lookupBook" method = "get">
+    <div class = "form-group">
+        <input class = "form-control" name = "id" id = "id" type="text" placeholder="Lookup for books">
+    </div>
+    <div class = "form-group">
+        <button class= "btn btn-primary" type="submit">Lookup Book</button>
+    </div>
+</form>
+
+#if(book) {
+  #if(!initialOpen) {
+<table class="table table-bordered table-hover">
+    <thead class="thread-light">
+        <tr>
+            <th>id</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Cost</th>
+            <th># in stock</th>
+            <th>Edit</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>#(book.id)</td>
+            <td>#(book.title)</td>
+            <td>#(book.category)</td>
+            <td>#(book.price)</td>
+            <td>#(book.numberOfItems)</td>
+            <td><a href="edit/#(book.id)">Edit</a></td>
+        </tr>
+    </tbody>
+</table>
+}
+} else {
+  #if(!initialOpen) {
+<h2>There is no book with this id available!</h2>
+}
+}
+}
+
+#embed("base")
+
