@@ -52,7 +52,7 @@ struct HomeController: RouteCollection {
             url: URL(string: "/books/search?category=" + (searchCategory.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""))!,
             headers: headers
         )
-        let client = HTTPClient.connect(hostname: "localhost", port: 8090, on: req)
+        let client = HTTPClient.connect(hostname: "40.68.168.196", port: 80, on: req)
         return client.flatMap(to: View.self) { client in
             return client.send(checkAvailableRequest).flatMap(to: [Book].self) { response in
                 let decoder = JSONDecoder()
@@ -75,7 +75,7 @@ struct HomeController: RouteCollection {
             url: URL(string: "/books/" + bookId)!,
             headers: headers
         )
-        let client = HTTPClient.connect(hostname: "localhost", port: 8090, on: req)
+        let client = HTTPClient.connect(hostname: "40.68.168.196", port: 80, on: req)
         return client.flatMap(to: View.self) { client in
             return client.send(checkAvailableRequest).flatMap(to: View.self) { response in
                 if response.status == .notFound {
@@ -106,7 +106,7 @@ struct HomeController: RouteCollection {
                 headers: headers,
                 body: HTTPBody(string: jsonString)
                 )
-            let client = HTTPClient.connect(hostname: "localhost", port: 8050, on: req)
+            let client = HTTPClient.connect(hostname: "13.94.233.209", port: 80, on: req)
             return client.flatMap(to: BuyResponse.self) { client in
                 return client.send(buyBookRequest).flatMap(to: BuyResponse.self) { response in
                     let decoder = JSONDecoder()
@@ -136,7 +136,7 @@ struct HomeController: RouteCollection {
             url: URL(string: "/books/\(bookId)")!,
             headers: headers,
             body: HTTPBody(string: jsonString))
-            let client = HTTPClient.connect(hostname: "localhost", port: 8090, on: req)
+            let client = HTTPClient.connect(hostname: "40.68.168.196", port: 80, on: req)
             return client.flatMap(to: Book.self) { client in
                 return client.send(editBookRequest).flatMap(to: Book.self) { response in
                     let decoder = JSONDecoder()
