@@ -7,11 +7,13 @@
 
 import Vapor
 
+/// Buy Request.
 final class BuyRequest {
-    /// Book id
+    
+    /// Book id.
     let bookId: Int
 
-    /// Create `BuyRequest`
+    /// Create `BuyRequest`.
     init(bookId: Int) {
         self.bookId = bookId
     }

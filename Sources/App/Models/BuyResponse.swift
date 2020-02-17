@@ -1,8 +1,9 @@
 import Vapor
 
-/// A single entry of a Todo list.
+/// Buy Response
 final class BuyResponse {
-    /// Success
+    
+    /// To indicate if buy operation succeeded or not.
     var success: Bool
 
     /// Create a new `Buy Response`.

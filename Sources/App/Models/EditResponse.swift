@@ -7,13 +7,13 @@
 
 import Vapor
 
-/// Edit Response
+/// Edit Response.
 final class EditResponse {
     
-    /// book
+    /// The edited book.
     let book: Book
 
-    /// Create `EditResponse`
+    /// Create `EditResponse`.
     init(book: Book) {
         self.book = book
     }

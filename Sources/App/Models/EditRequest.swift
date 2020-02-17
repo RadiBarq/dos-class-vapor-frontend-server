@@ -7,19 +7,19 @@
 
 import Vapor
 
-/// Edit Request
+/// Edit Request.
 final class EditRequest {
     
-    /// Id
+    /// Book id.
     let id: Int
     
-    /// Number of items
+    /// Numbe of items of specific book.
     let numberOfItems: Int
     
-    /// Price
+    /// Book price
     let price: Int
     
-    /// Create `EditRequest`
+    /// Create `EditRequest`.
     init(numberOfItems: Int, price: Int, id: Int) {
         self.id = id
         self.numberOfItems = numberOfItems
