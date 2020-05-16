@@ -36,4 +36,9 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     
     // Configure renderer to prefer view renderer
     config.prefer(LeafRenderer.self, for: ViewRenderer.self)
+    
+    // Register migration services.
+    var migrations = MigrationConfig()
+    migrations.add(model: RequestCache.self, database:  DatabaseIdentifier<RequestCache.Database>.sqlite)
+    services.register(migrations)
 }

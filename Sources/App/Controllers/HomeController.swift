@@ -11,6 +11,12 @@ import Leaf
 /// Home Controller.
 struct HomeController: RouteCollection {
     
+    let orderServerIps = ["localhost", "localhost"]
+    let orderServerPorts = [8080, 8200]
+    
+    let catalogServerIps = ["localhost", "localhost"]
+    let catalogServerPorts = [8100,  8210]
+    
     /// Registers routes to the incoming router.
     ///
     /// - parameters:
@@ -25,6 +31,7 @@ struct HomeController: RouteCollection {
         router.get("edit", Int.parameter, use: editWebPage)
         router.post("buyBook", use: buyBook)
         router.post("edit", Int.parameter, use: editBook)
+        router.delete("invalidateBook", Int.parameter, use: invalidate)
     }
     
     /// Listen to home web page `GET` requests.
@@ -82,7 +89,8 @@ struct HomeController: RouteCollection {
             url: URL(string: "/books/search?category=" + (searchCategory.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""))!,
             headers: headers
         )
-        let client = HTTPClient.connect(hostname: "40.68.168.196", port: 80, on: req)
+        let serverTurn = RoundRobinScheduler.getCatalogServerTurn()
+        let client = HTTPClient.connect(hostname: self.catalogServerIps[serverTurn], port: self.catalogServerPorts[serverTurn], on: req)
         return client.flatMap(to: View.self) { client in
             return client.send(checkAvailableRequest).flatMap(to: [Book].self) { response in
                 let decoder = JSONDecoder()
@@ -104,24 +112,37 @@ struct HomeController: RouteCollection {
         guard let bookId = req.query[String.self, at: "id"] else {
             throw Abort(.badRequest)
         }
-        let headers: HTTPHeaders = HTTPHeaders([("Content-Type", "application/json")])
-        let checkAvailableRequest = HTTPRequest(
-            method: .GET,
-            url: URL(string: "/books/" + bookId)!,
-            headers: headers
-        )
-        let client = HTTPClient.connect(hostname: "40.68.168.196", port: 80, on: req)
-        return client.flatMap(to: View.self) { client in
-            return client.send(checkAvailableRequest).flatMap(to: View.self) { response in
-                if response.status == .notFound {
-                    let context = LookupBookContext(title: "Lookup Books", book: nil, initialOpen: false)
-                    return try req.view().render("lookup", context)
-                } else {
-                    let decoder = JSONDecoder()
-                    let book = try decoder.decode(Book.self, from: response.body.data!)
-                    return req.future(book).flatMap(to: View.self) { book in
-                        let context = LookupBookContext(title: "Lookup Books", book: book, initialOpen: false)
-                        return try req.view().render("lookup", context)
+        
+        return RequestCache.find(Int(bookId)!, on: req).flatMap(to: View.self) { respone in
+            if let cachedRequest = respone, cachedRequest.valid {
+                let context = LookupBookContext(title: "Lookup Books", book: cachedRequest.book, initialOpen: false)
+                return try req.view().render("lookup", context)
+            } else {
+                let headers: HTTPHeaders = HTTPHeaders([("Content-Type", "application/json")])
+                let checkAvailableRequest = HTTPRequest(
+                    method: .GET,
+                    url: URL(string: "/books/" + bookId)!,
+                    headers: headers
+                )
+                let serverTurn = RoundRobinScheduler.getCatalogServerTurn()
+                let client = HTTPClient.connect(hostname: self.catalogServerIps[serverTurn], port: self.catalogServerPorts[serverTurn], on: req)
+                return client.flatMap(to: View.self) { client in
+                    return client.send(checkAvailableRequest).flatMap(to: View.self) { response in
+                        if response.status == .notFound {
+                            let context = LookupBookContext(title: "Lookup Books", book: nil, initialOpen: false)
+                            return try req.view().render("lookup", context)
+                        } else {
+                            let decoder = JSONDecoder()
+                            let book = try decoder.decode(Book.self, from: response.body.data!)
+                            let requestCache = RequestCache(id: book.id, book: book, valid: true)
+                            return requestCache.create(on: req).flatMap(to: View.self) { savedBook in
+                                return req.future(book).flatMap(to: View.self) { book in
+                                    let context = LookupBookContext(title: "Lookup Books", book: book, initialOpen: false)
+                                    return try req.view().render("lookup", context)
+                                }
+                            }
+                            
+                        }
                     }
                 }
             }
@@ -146,7 +167,10 @@ struct HomeController: RouteCollection {
                 headers: headers,
                 body: HTTPBody(string: jsonString)
             )
-            let client = HTTPClient.connect(hostname: "13.94.233.209", port: 80, on: req)
+            
+            let serverTurn = RoundRobinScheduler.getOrderServerTurn()
+            
+            let client = HTTPClient.connect(hostname: self.orderServerIps[serverTurn], port: self.orderServerPorts[serverTurn], on: req)
             return client.flatMap(to: BuyResponse.self) { client in
                 return client.send(buyBookRequest).flatMap(to: BuyResponse.self) { response in
                     let decoder = JSONDecoder()
@@ -181,7 +205,8 @@ struct HomeController: RouteCollection {
                 url: URL(string: "/books/\(bookId)")!,
                 headers: headers,
                 body: HTTPBody(string: jsonString))
-            let client = HTTPClient.connect(hostname: "40.68.168.196", port: 80, on: req)
+            let serverTurn = RoundRobinScheduler.getCatalogServerTurn()
+            let client = HTTPClient.connect(hostname: self.catalogServerIps[serverTurn], port: self.catalogServerPorts[serverTurn], on: req)
             return client.flatMap(to: Book.self) { client in
                 return client.send(editBookRequest).flatMap(to: Book.self) { response in
                     let decoder = JSONDecoder()
@@ -193,6 +218,21 @@ struct HomeController: RouteCollection {
             return try req.view().render("edit", editContext)
         }
     }
+    
+    /// Listen to invalidate `DELETE` requests.
+    ///
+    /// - parameters:
+    ///     - req: `Request` the upcoming request sent.
+    /// - returns: nothing
+    func invalidate(req: Request) throws -> Future<HTTPStatus> {
+             let bookId = try req.parameters.next(Int.self)
+        return RequestCache.find(bookId, on: req).flatMap(to: HTTPStatus.self) { requestCache in
+            guard let requestCache = requestCache else {
+                return req.future(HTTPStatus.badRequest)
+            }
+            return requestCache.delete(on: req).transform(to: HTTPStatus.noContent)
+        }
+    }
 }
 
 /// Search Books Web Page Content.
@@ -200,7 +240,7 @@ struct SearchBooksContext: Encodable {
     
     /// Page title.
     let title: String
-
+    
     /// Book to show inside the web page when the user search for the book.
     let books: [Book]?
 }
